@@ -1,0 +1,61 @@
+-> Going RESTful: Build an API Lesson
+    -> Flask User Authentication for APIs (15 min)
+
+-> Introduction
+    -> Traditional login forms delegate authentication to Flask-Login through user sessions
+    -> REST APIs are stateless, requiring credentials with every request to maintain REST principles
+    -> Two authentication methods for APIs: HTTP authentication and token-based authentication
+
+-> HTTP Authentication
+    -> Credentials are sent through the `Authorization` request header
+    -> Flask-HTTPAuth simplifies HTTP authentication via decorators
+    -> Install Flask-HTTPAuth with: `$ pip install flask-httpauth`
+    -> Example implementation:
+        -> Use `@auth.verify_password` decorator to check user credentials
+        -> Return a `401` status code for failed authentication using a custom error handler
+        -> Store authenticated users in Flask's context variable (`g.current_user`)
+
+-> Using Flask-HTTPAuth
+    -> Example callback:
+        -> Verifies if credentials are valid
+        -> Sets `g.current_user` and returns True if authentication succeeds
+        -> Sends `401` error automatically when credentials are invalid
+    -> Callback can override the default behaviour for customised error messages
+
+-> Token Authentication
+    -> Tokens are safer and allow temporary authentication without requiring sensitive credentials each time
+    -> Process:
+        -> Client requests a token by providing credentials
+        -> API verifies credentials and returns a token
+        -> Client includes the token in subsequent API requests instead of credentials
+    -> Tokens have expiration dates, adding security and requiring periodic re-authentication
+
+-> Changes to the User Model
+    -> Add methods to generate and verify tokens:
+        -> `generate_auth_token`: Creates a token with an expiration time
+        -> `verify_auth_token`: Validates the token and retrieves the associated user
+
+-> Adding Token Authentication Functionality
+    -> Modify the `@auth.verify_password` callback to:
+        -> Check if a token was provided instead of a password
+        -> Validate the token using `User.verify_auth_token`
+        -> Set `g.token_used` to indicate if a token was used for authentication
+
+-> Gimme My Token!
+    -> Create an API endpoint to generate and return tokens:
+        -> Endpoint: `/tokens/` (POST request)
+        -> Verifies user credentials before generating a token
+        -> Returns a token and its expiration in JSON format
+
+-> Protecting Your App's Content
+    -> Use `@auth.login_required` to restrict access to API endpoints
+    -> Apply `@auth.login_required` at the blueprint level using `@api.before_request`
+    -> Example:
+        -> Check if the authenticated user’s account is confirmed
+        -> Return a `403 Forbidden` response for unconfirmed accounts
+
+-> Summary: HTTP and Token Authentication
+    -> HTTP authentication requires credentials sent via the `Authorization` header
+    -> Flask-HTTPAuth simplifies HTTP authentication through decorators
+    -> Token-based authentication allows for secure, temporary access with token expiration
+    -> Protect API endpoints using authentication decorators and blueprint-level restrictions

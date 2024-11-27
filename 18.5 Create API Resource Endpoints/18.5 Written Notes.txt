@@ -1,0 +1,85 @@
+-> In this lesson, you'll learn how to make the routes that API clients can use to request, and create, data in your webapp
+	-> Resource endpoints are the points of exchange, where your app can receive client requests
+
+-> GET
+	-> A GET request is meant to get data
+	-> One API endpoint you can make is one for getting a particular user
+	-> This route simply takes a user id, gets the associated user, and JSONifies the object
+	-> If the user doesn't exist, the API would catch the error and indicate that to the client
+	-> For multiple objects like all compositions in the database, the endpoint can return the data like this:
+		-> @api.route('/users/<int:id>')
+			-> def get_user(id):
+				-> user = User.query.get_or_404(id)
+				-> return jsonify(user.to_json())
+		-> @api.route('/compositions/')
+			-> def get_compositions():
+				-> compositions = Composition.query.all()
+				-> return jsonify({'compositions': [composition.to_json() for composition in compositions]})
+
+-> POST
+	-> A POST request to make a new composition through the API can be done like so:
+		-> @api.route('/compositions/', methods=['POST'])
+			-> @permission_required(Permission.PUBLISH)
+			-> def new_composition():
+				-> composition = Composition.from_json(request.json)
+				-> composition.artist = g.current_user
+				-> db.session.add(composition)
+				-> db.session.commit()
+				-> return jsonify(composition.to_json()), 201, {'Location': url_for('api.get_composition', id=composition.id)}
+	-> The route first deserializes the composition data
+	-> If all goes well, it grabs the user that made the request and adds the composition to the database
+	-> It then returns the deserialized and serialized composition, with a 201 status code and header to the new composition’s URL
+
+-> PUT
+	-> Users can edit their compositions with a PUT request through the API:
+		-> @api.route('/compositions/<int:id>', methods=['PUT'])
+			-> @permission_required(Permission.PUBLISH)
+			-> def edit_composition(id):
+				-> composition = Composition.query.get_or_404(id)
+				-> if g.current_user != composition.artist and not g.current_user.can(Permission.ADMIN):
+					-> return forbidden('Insufficient permissions')
+				-> put_json = json.loads(request.json)
+				-> composition.release_type = put_json.get('release_type', composition.release_type)
+				-> composition.title = put_json.get('title', composition.title)
+				-> composition.description = put_json.get('description', composition.description)
+				-> db.session.add(composition)
+				-> db.session.commit()
+				-> return jsonify(composition.to_json())
+	-> The view function first finds the composition and checks the client’s permissions
+	-> It modifies the composition with the new data and re-adds it to the database
+	-> The newly modified composition is returned as JSON
+
+-> More Endpoints
+	-> Create more endpoints for additional resources:
+		-> GET /users/<int:id>/compositions/ to return all compositions written by a user
+		-> GET /users/<int:id>/timeline/ to return all compositions followed by a user
+		-> GET /compositions/<int:id> to return a particular composition
+
+-> Paginating JSON Data
+	-> You can paginate your JSON data just like you paginate browser data
+	-> Paginating is helpful for managing large data sets
+	-> Use the following example to paginate data:
+		-> @api.route('/compositions/')
+			-> def get_compositions():
+				-> page = request.args.get('page', 1, type=int)
+				-> pagination = Composition.query.paginate(page, per_page=current_app.config['RAGTIME_COMPS_PER_PAGE'], error_out=False)
+				-> compositions = pagination.items
+				-> prev = None
+				-> if pagination.has_prev:
+					-> prev = url_for('api.get_compositions', page=page-1)
+				-> next = None
+				-> if pagination.has_next:
+					-> next = url_for('api.get_compositions', page=page+1)
+				-> return jsonify({
+					-> 'compositions': [composition.to_json() for composition in compositions],
+					-> 'prev': prev,
+					-> 'next': next,
+					-> 'count': pagination.total
+				})
+	-> Pagination allows you to split large data sets into smaller, more manageable chunks
+	-> The code captures URLs for the previous and next chunks of data, and returns the current page’s data in JSON format
+
+-> Summary: Create API Resource Endpoints
+	-> Resource endpoints are where your app can receive client requests
+	-> GET requests are for retrieving data, POST requests are for creating new data, and PUT requests are for modifying existing data
+	-> You can also paginate your JSON data for efficiency when handling large sets of data
