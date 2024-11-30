@@ -1,52 +1,52 @@
 -> Going RESTful: Build an API Lesson
-	-> Lab: Create an API Blueprint for Your Flask App (5 min)
+    -> Lab: Create an API Blueprint for Your Flask App (5 min)
 
 -> Introduction
-	-> Focus on APIs to allow programmatic access to website data
-	-> APIs enable querying, adding, or editing content programmatically
-	-> REST (Representational State Transfer) is the architecture for building APIs
+    -> Focus on APIs to allow programmatic access to website data
+    -> APIs enable querying, adding, or editing content programmatically
+    -> REST (Representational State Transfer) is the architecture for building APIs
 
 -> Revisiting APIs
-	-> APIs provide:
-		-> Access to site's content for developers or clients
-		-> Programmatic operations like queries, additions, or edits
-	-> Requires careful implementation with permissions, error handling, and serialization
+    -> APIs provide:
+        -> Access to site's content for developers or clients
+        -> Programmatic operations like queries, additions, or edits
+    -> Requires careful implementation with permissions, error handling, and serialisation
 
 -> API Blueprint For Your Webapp
-	-> Objective: Implement Flask app's REST API
-	-> Create a blueprint to organize API-related resources
-	-> RESTful approach ensures stateless interactions with resources
+    -> Objective: Implement Flask app's REST API
+    -> Create a blueprint to organise API-related resources
+    -> RESTful approach ensures stateless interactions with resources
 
 -> Learn by Doing
-	-> Create and Register the API Blueprint
-		-> Create a new directory: `app/api/`
-		-> Create a blueprint file: `__init__.py`
-		-> Register the blueprint with `url_prefix='/api/v1'`
-			-> Use versioning (`v1`) to enable future updates without breaking older integrations
+    -> Create and Register the API Blueprint
+        -> Create a new directory: `app/api/`
+        -> Create a blueprint file: `__init__.py`
+        -> Register the blueprint with `url_prefix='/api/v1'`
+            -> Use versioning (`v1`) to enable future updates without breaking older integrations
 
-	-> Add Other Modules to the API Blueprint
-		-> Create these files within `app/api/`:
-			- `__init__.py` (blueprint creation)
-			- `authentication.py`
-			- `comments.py`
-			- `compositions.py`
-			- `decorators.py`
-			- `errors.py`
-			- `users.py`
-		-> Import all files except `decorators.py` into the blueprint
+    -> Add Other Modules to the API Blueprint
+        -> Create these files within `app/api/`:
+            - `__init__.py` (blueprint creation)
+            - `authentication.py`
+            - `comments.py`
+            - `compositions.py`
+            - `decorators.py`
+            - `errors.py`
+            - `users.py`
+        -> Import all files except `decorators.py` into the blueprint
 
 -> Summary
-	-> APIs allow clients to query and manipulate site content
-	-> Blueprint for the API helps modularize resources
-	-> Versioning via `v1` ensures forward compatibility
-	-> API structure:
-		```
-		app/api/
-		├── __init__.py
-		├── authentication.py
-		├── comments.py
-		├── compositions.py
-		├── decorators.py
-		├── errors.py
-		└── users.py
-		```
+    -> APIs allow clients to query and manipulate site content
+    -> Blueprint for the API helps modularise resources
+    -> Versioning via `v1` ensures forward compatibility
+    -> API structure:
+        ```
+        app/api/
+        ├── __init__.py
+        ├── authentication.py
+        ├── comments.py
+        ├── compositions.py
+        ├── decorators.py
+        ├── errors.py
+        └── users.py
+        ```

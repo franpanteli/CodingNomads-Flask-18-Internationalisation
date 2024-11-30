@@ -1,51 +1,51 @@
 -> Going RESTful: Build an API Lesson
-	-> Error Handling in Your Flask API (4 min)
+    -> Error Handling in Your Flask API (4 min)
 
 -> Introduction
-	-> APIs may encounter errors, and handling them properly is critical for usability and debugging
-	-> This lesson focuses on converting error responses into JSON for API clients
+    -> APIs may encounter errors, and handling them properly is critical for usability and debugging
+    -> This lesson focuses on converting error responses into JSON for API clients
 
 -> Error Handling with JSON
-	-> Current error handlers return HTML responses; APIs should return JSON responses for errors
-	-> Flask’s `jsonify()` function converts Python dictionaries into JSON responses
+    -> Current error handlers return HTML responses; APIs should return JSON responses for errors
+    -> Flask’s `jsonify()` function converts Python dictionaries into JSON responses
 
-	-> Updating the 404 Error Handler
-		- Example code for 404 error:
-		```python
-		from flask import jsonify, request, render_template
-		
-		def page_not_found(e):
-		    if request.accept_mimetypes.accept_json and not request.accept_mimetypes.accept_html:
-		        response = jsonify({'error': 'not found'})
-		        response.status_code = 404
-		        return response
-		    error_msg = "That page doesn't exist."
-		    return render_template('error.html', error_msg=error_msg), 404
-		```
-		-> Checks the `Accept` header (`request.accept_mimetypes`) to determine the client's expected response format
-		-> If JSON is expected, a JSON response is returned; otherwise, falls back to HTML
+    -> Updating the 404 Error Handler
+        - Example code for 404 error:
+        ```python
+        from flask import jsonify, request, render_template
+        
+        def page_not_found(e):
+            if request.accept_mimetypes.accept_json and not request.accept_mimetypes.accept_html:
+                response = jsonify({'error': 'not found'})
+                response.status_code = 404
+                return response
+            error_msg = "That page doesn't exist."
+            return render_template('error.html', error_msg=error_msg), 404
+        ```
+    -> Checks the `Accept` header (`request.accept_mimetypes`) to determine the client's expected response format
+    -> If JSON is expected, a JSON response is returned; otherwise, falls back to HTML
 
 -> Learn by Doing
-	-> Task: Implement the same functionality for the **500 Internal Server Error** handler
+    -> Task: Implement the same functionality for the **500 Internal Server Error** handler
 
 -> Web Service Error Handling
-	-> Certain API-specific errors can be handled with custom helper functions
-		- Example for a 403 Forbidden error:
-		```python
-		from flask import jsonify
+    -> Certain API-specific errors can be handled with custom helper functions
+        - Example for a 403 Forbidden error:
+        ```python
+        from flask import jsonify
 
-		def forbidden(message):
-		    response = jsonify({'error': 'forbidden', 'message': message})
-		    response.status_code = 403
-		    return response
-		```
+        def forbidden(message):
+            response = jsonify({'error': 'forbidden', 'message': message})
+            response.status_code = 403
+            return response
+        ```
 
-	-> Task: Create similar helper functions for:
-		- **400**: Bad Request
-		- **401**: Unauthorized
-		-> Hint: Follow a similar pattern as the 403 error handler
+    -> Task: Create similar helper functions for:
+        - **400**: Bad Request
+        - **401**: Unauthorized
+    -> Hint: Follow a similar pattern as the 403 error handler
 
 -> Summary: Restful Web Services and Error Handling
-	-> APIs should handle errors gracefully and consistently, using JSON responses for API clients
-	-> Flask’s `jsonify()` is key for converting error details into JSON
-	-> Error handlers should differentiate between API and non-API requests based on the `Accept` header
+    -> APIs should handle errors gracefully and consistently, using JSON responses for API clients
+    -> Flask’s `jsonify()` is key for converting error details into JSON
+    -> Error handlers should differentiate between API and non-API requests based on the `Accept` header
