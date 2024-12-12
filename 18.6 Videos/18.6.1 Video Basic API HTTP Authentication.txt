@@ -1,0 +1,93 @@
+How to Verify a User Through the API with Basic HTTP Authentication
+
+-> Implementing HTTP Basic Authentication with Flask-HTTPAuth
+   -> Begin your API user authentication journey by verifying users through basic HTTP authentication
+   -> First, install the required `Flask-HTTPAuth` package in your Flask application
+   -> Navigate to the `app/API/authentication` module in your project and set up basic HTTP authentication using Flask-HTTPAuth
+   -> Use the `Flask-HTTPAuth` extension to handle basic authentication in your API
+   -> Similar to how `Flask-Login` works, the HTTP Basic Auth object needs a method to check if the user is authenticated
+   -> To achieve this, you need to create a function that verifies the user's email and password, decorated with the `@verify_password` decorator provided by Flask-HTTPAuth
+     Example Python code for setting up basic authentication:
+     ```python
+     from flask_httpauth import HTTPBasicAuth
+     auth = HTTPBasicAuth()
+     
+     @auth.verify_password
+     def verify_password(email, password):
+         # function to check email and password
+     ```
+
+-> Verifying the User’s Email and Password
+   -> The `@verify_password` decorator checks the provided email and password for each request
+   -> Inside this function, you can either directly validate the credentials or check them later
+   -> Start by checking if the email field is empty, and return `False` if it is, indicating that the authentication attempt wasn’t successful
+     Example:
+     ```python
+     if not email:
+         return False
+     ```
+   -> If the email is provided, check if the user exists in the database
+     - If the user’s email is not found in the database, disallow API access by returning `False`
+     Example:
+     ```python
+     user = User.query.filter_by(email=email).first()
+     if not user:
+         return False
+     ```
+
+-> Validating the Password
+   -> If the email exists in the database, proceed to validate the password
+   -> Use the `check_password_hash` method to compare the provided password with the stored hashed password
+     Example:
+     ```python
+     if not check_password_hash(user.password, password):
+         return False
+     ```
+   -> If the email and password are valid, return `True` to indicate that the user has successfully authenticated
+     Example:
+     ```python
+     return True
+     ```
+
+-> Customising Authentication Failure Responses
+   -> If the user fails authentication, Flask-HTTPAuth allows you to override the default error response
+   -> Use the `@auth.error_handler` decorator to customise the error message and response when authentication fails
+     Example of error handling:
+     ```python
+     @auth.error_handler
+     def auth_error():
+         return jsonify({'message': 'Unauthorised access'}), 401
+     ```
+
+-> Testing the API Authentication
+   -> To test HTTP authentication, ensure your API returns JSON responses or an empty response for now
+   -> Install the `httpie` tool, which is a command-line HTTP client that allows you to interact with your API
+   -> Use `httpie` to send requests with user credentials for authentication and verify if the authentication works as expected
+     Example:
+     ```bash
+     http --json --auth username:password http://localhost:5000/api/
+     ```
+
+-> Making Requests with HTTPie
+   -> Start your Flask app, then use the `http` command in the terminal to make requests to your API
+   -> Add the `--json` flag to ensure the response is in JSON format and `--auth` to pass the username and password for authentication
+   -> Test the authentication by making a `GET` request to your API
+     Example of a GET request:
+     ```bash
+     http --json --auth user@example.com:password http://localhost:5000/api/
+     ```
+   -> If the credentials are correct, the response should return a `200 OK` status code with an empty JSON response, indicating successful authentication
+
+-> Testing Authentication Failure
+   -> Test the authentication failure scenario by entering an incorrect password
+   -> If the password is incorrect, the server should return a `401 Unauthorised` status code, confirming that authentication has failed as expected
+   -> Example of testing incorrect password:
+     ```bash
+     http --json --auth user@example.com:wrongpassword http://localhost:5000/api/
+     ```
+   -> The response should show an `Unauthorised` status, confirming that the authentication failed as expected
+
+-> Final Thoughts
+   -> This guide demonstrates how to implement user authentication through an API using basic HTTP authentication in Flask with the Flask-HTTPAuth package
+   -> By following the steps outlined above, you can set up basic authentication for your API, ensuring that only authenticated users can access protected resources
+   -> Testing the authentication ensures that the process works smoothly and correctly, allowing for secure access to your API resources

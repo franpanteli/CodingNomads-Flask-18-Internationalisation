@@ -1,0 +1,136 @@
+How to Verify User Authentication to the API
+
+-> Modifying the User Model for Authentication
+   -> To implement authentication in your API, the first step is to modify the `User` model to handle authentication tokens
+   -> At the bottom of the user model class, make the necessary adjustments to accommodate authentication token generation and validation
+   -> Token generation for the API is almost identical to the confirmation token generation. The key difference is that the token data will contain the user's `id` rather than a `confirm_id`, which is used in confirmation tokens
+     - This distinction ensures that the generated token is specific to the user and can be used for API authentication purposes
+   -> Example of creating a token with the user’s ID:
+     ```python
+     import jwt
+     from datetime import datetime, timedelta
+     from yourapp import app
+
+     class User(db.Model):
+         # User model details
+
+         def generate_auth_token(self, expiration=600):
+             """
+             Generates an authentication token containing the user's ID
+             The default expiration time for the token is 600 seconds (10 minutes)
+             """
+             payload = {
+                 'id': self.id,
+                 'exp': datetime.utcnow() + timedelta(seconds=expiration)
+             }
+             return jwt.encode(payload, app.config['SECRET_KEY'], algorithm='HS256')
+     ```
+
+-> Validating the Authentication Token
+   -> Now, the user model needs a method to validate the authentication token
+   -> Create a method to verify the token, decoding it and checking whether it is valid and corresponds to an existing user
+   -> If the token is successfully decoded and the data matches, return the `User` object; otherwise, return `None` to signify that the token is invalid
+   -> Example of validating the authentication token:
+     ```python
+     class User(db.Model):
+         # User model details
+
+         @staticmethod
+         def verify_auth_token(token):
+             """
+             Verifies the authenticity of the token by decoding it.
+             If the token is valid, returns the associated user.
+             """
+             try:
+                 payload = jwt.decode(token, app.config['SECRET_KEY'], algorithms=['HS256'])
+                 user = User.query.get(payload['id'])
+                 return user if user else None
+             except jwt.ExpiredSignatureError:
+                 return None
+             except jwt.InvalidTokenError:
+                 return None
+     ```
+
+-> Updating the `verify_password` Function
+   -> The next step is to modify the `verify_password` function in `authentication.py` to handle cases where users may authenticate using either a password or a token
+   -> When a user submits a request with a token instead of a password, this function should be able to detect that and authenticate the user using the token alone
+   -> The function should check for a token in the request. If the token is provided and valid, the function should authenticate the user using the token, allowing the password to be skipped
+   -> If no token is provided, the function should fall back to verifying the password as usual
+   -> Example of the `verify_password` function with token validation:
+     ```python
+     from flask_httpauth import HTTPBasicAuth
+     from yourapp import app
+
+     auth = HTTPBasicAuth()
+
+     @auth.verify_password
+     def verify_password(email_or_token, password):
+         """
+         Verifies the user's credentials. If a token is provided, validate it.
+         If not, authenticate the user with the email and password combination.
+         """
+         # Check if the email_or_token is actually a token
+         user = User.verify_auth_token(email_or_token)
+         if user:
+             return user
+
+         # Otherwise, verify with email and password
+         user = User.query.filter_by(email=email_or_token).first()
+         if user and user.verify_password(password):
+             return user
+         return None
+     ```
+
+-> Protecting API Routes with Authentication
+   -> With the changes to the `verify_password` function, the API routes now need protection to ensure that only authenticated users can access them
+   -> Create a new view function where users can request an authentication token. This view should ensure the user is anonymous before generating the token, meaning the user has not already logged in or authenticated
+   -> Protect all API routes by using the `before_request` decorator in your API blueprint. This ensures that any unauthenticated users are blocked from accessing any route unless they provide valid credentials (e.g., a token or password)
+   -> Additionally, use the `login_required` decorator on routes that should only be accessible to authenticated users. This decorator will prevent access to unauthenticated users
+   -> Example of protecting API routes with the `before_request` and `login_required` decorators:
+     ```python
+     from flask import Blueprint, jsonify
+     from flask_login import login_required
+     from yourapp import api, app
+
+     @api.before_request
+     def before_request():
+         """
+         Before every API request, check if the user is authenticated.
+         If not, return a 401 Unauthorized response.
+         """
+         if not current_user.is_authenticated:
+             return jsonify({'message': 'Unauthenticated'}), 401
+
+     @api.route('/secure_route')
+     @login_required
+     def secure_route():
+         """
+         A protected route only accessible to authenticated users.
+         """
+         return jsonify({'message': 'This is a secure route accessible to authenticated users only'})
+     ```
+
+-> Testing the Authentication Token Endpoint
+   -> After making the necessary updates, ensure that the Flask app is running and the token endpoint is accessible
+   -> Open a terminal and use an HTTP client such as `httpie` to make a `POST` request to the token generation route
+     - This request should send the user’s email and password, and the response will contain an authentication token that can be used for subsequent requests
+     Example of using `httpie` to obtain an authentication token:
+     ```bash
+     http --json POST http://localhost:5000/api/token email=user@example.com password=userpassword
+     ```
+   -> The response should include a token string, which will be returned in the JSON response between curly braces. This token is used for authenticating the user in future requests
+
+-> Making Authenticated API Requests with the Token
+   -> Once you have the token, you can use it to authenticate future API requests
+   -> Make an authenticated request by including the token in the `Authorization` header of the request
+     - The `Authorization` header should follow the format `Bearer <your_token>`
+   -> Example of making an authenticated API request with a token:
+     ```bash
+     http --json GET http://localhost:5000/api/secure_route Authorization:"Bearer your_token"
+     ```
+   -> If the token is valid, the server will process the request and return the response. If the token is invalid, the server will return a 401 Unauthorized error
+
+-> Final Thoughts
+   -> Congratulations! You’ve successfully implemented user authentication for your API using tokens
+   -> This process ensures that users can authenticate through either their password or a valid token, providing flexibility for various use cases
+   -> It is essential to protect your API routes with authentication checks to prevent unauthorised access. Use the appropriate decorators to enforce this security measure

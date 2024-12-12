@@ -1,0 +1,92 @@
+How to Create Routes in the API and Manage Content Exchanges
+
+-> Creating a GET Route to Retrieve a User by ID
+   -> To begin, open the `users.py` file within the API blueprint of your Flask application
+   -> The first route will be a simple `GET` handler that retrieves a user by their ID
+   -> This route should fetch the user from the database based on the specified user ID, or return a `404 Not Found` response if the user does not exist
+   -> Example of a GET route to retrieve a user:
+     ```python
+     @app.route('/user/<int:user_id>', methods=['GET'])
+     def get_user(user_id):
+         user = User.query.get_or_404(user_id)
+         return jsonify(user.serialize())
+     ```
+   -> This route is crucial for accessing specific users by ID in the API and handling potential errors
+
+-> Creating a `permission_required` Decorator
+   -> In the decorators file, create a `permission_required` decorator, similar to the `@verify_password` decorator from earlier
+   -> This decorator will check the permissions of the current user in the context of the request
+   -> If the user does not meet the required permissions, the decorator will return a `403 Forbidden` response
+     Example of a `permission_required` decorator:
+     ```python
+     from functools import wraps
+     from flask import abort, current_user
+
+     def permission_required(permission):
+         def decorator(func):
+             @wraps(func)
+             def wrapper(*args, **kwargs):
+                 if not current_user.has_permission(permission):
+                     abort(403)  # Forbidden error
+                 return func(*args, **kwargs)
+             return wrapper
+         return decorator
+     ```
+
+-> Using the `permission_required` Decorator for a POST Route
+   -> The new `permission_required` decorator can be applied to a `POST` route for adding compositions to the database
+   -> This route will extract composition data from the incoming JSON, validate it, and assign the current user as the author
+   -> Once validated, the composition will be added to the database, and a slug will be generated for it
+   -> Example of a `POST` route to add a composition:
+     ```python
+     @app.route('/composition', methods=['POST'])
+     @permission_required('create_composition')
+     def add_composition():
+         data = request.get_json()
+         title = data.get('title')
+         release_type = data.get('release_type')
+         # Additional validation here
+         composition = Composition(title=title, release_type=release_type, author=current_user)
+         db.session.add(composition)
+         db.session.commit()
+         return redirect(url_for('get_composition', composition_id=composition.id))
+     ```
+
+-> Testing the GET User Endpoint
+   -> To test the `GET` user endpoint, open your terminal and activate your project’s virtual environment as you did before
+   -> Make an HTTP request to the user endpoint with a valid user ID
+     Example:
+     ```bash
+     http GET http://localhost:5000/user/1
+     ```
+   -> If implemented correctly, you should receive a response containing the user’s details or a `404 Not Found` if the user doesn’t exist
+
+-> Testing the POST Composition Endpoint
+   -> To test the `POST` endpoint for adding a composition, make a `POST` request including fields such as `release_type`, `title`, and any other required fields
+     Example of making a `POST` request with JSON data:
+     ```bash
+     http POST http://localhost:5000/composition title="New Composition" release_type="album"
+     ```
+   -> Ensure that data types are correctly formatted: strings should be passed as quoted values, and integers or booleans should be passed without quotes where appropriate
+
+-> Handling Data Types and Validation
+   -> When sending data through a POST request, ensure that you correctly handle different data types such as strings, integers, and booleans
+   -> Use Python’s built-in methods for type-checking and validation, such as `int()` or `str()` for conversion and validation before saving to the database
+
+-> Returning the Newly Created Composition
+   -> After successfully adding the composition to the database, return the newly created composition as a response
+   -> The response could include the composition's details and possibly the URI for the created resource
+     Example:
+     ```python
+     return jsonify(composition.serialize()), 201
+     ```
+   -> Alternatively, if you prefer, use a redirect to the composition’s detail page as a placeholder for now
+
+-> Final Testing and Implementation
+   -> After implementing the endpoints, test them by making both `GET` and `POST` requests using the appropriate tools (e.g., `httpie` or Postman)
+   -> For the `GET` request, you should receive a response with the user or composition details, while the `POST` request should return a success message or a newly created composition’s details
+   -> Once these steps are completed, you have successfully implemented content exchanges and route creation for your API
+
+-> Conclusion
+   -> This video demonstrated how to create routes in the API, including handling user retrieval with a `GET` route and adding compositions via a `POST` route
+   -> By using decorators for permission checks and correctly handling data validation, you’ve successfully built API routes that manage content exchanges securely and efficiently
