@@ -11,7 +11,7 @@ I saved course material as pdf files (.pdf extensions) and made notes on these (
 ![18 Notes Word Cloud Giff](https://github.com/user-attachments/assets/515e8643-e8d5-4e0e-be2a-ed45c3655458)
 
 ### Yellow
-Video notes were made in a txt format, contained in [16.9 Videos](https://github.com/franpanteli/CodingNomads-Flask-16-Performance-Optimisation/tree/main/16.9%20Videos). A [module quiz](https://github.com/franpanteli/CodingNomads-Flask-16-Performance-Optimisation/blob/main/16.10%20Quizzes/16.10%20Quiz%20Representing%20Content.pdf) was finally completed and passed. 
+Video notes were made in a txt format, contained in [18.6 Videos](https://github.com/franpanteli/CodingNomads-Flask-18-Internationalisation/tree/main/18.6%20Videos). A [module quiz](https://github.com/franpanteli/CodingNomads-Flask-18-Internationalisation/blob/main/18.7%20Quizzes/18.7%20Quiz%20APIs%20in%20Flask.pdf) was finally completed and passed. 
 
 ## To Clone This Repository
 ```
