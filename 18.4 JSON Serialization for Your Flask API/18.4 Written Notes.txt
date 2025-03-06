@@ -1,55 +1,55 @@
--> Introduction to JSON serialisation and deserialisation for Flask API
-    -> Learn how to convert app data to JSON and vice versa for API interaction
-    -> JSON is used to exchange data between web clients and servers through HTTP requests
-    -> Serialisation converts app data into JSON to send to clients, deserialisation does the reverse
-    -> Serialisation is essential for making your API functional
+-> introduction to json serialisation and deserialisation for flask api  
+    -> learn how to convert app data to json and vice versa for api interaction  
+    -> json is used to exchange data between web clients and servers through http requests  
+    -> serialisation converts app data into json to send to clients, deserialisation does the reverse  
+    -> serialisation is essential for making your api functional  
 
--> Serialising Resources
-    -> Data must be converted to JSON before sending it to API clients
-    -> Models in the app's database need serialisation functions to convert to JSON
-    -> A JSON object is a dictionary containing fields with values
-    -> Python dictionaries can be easily converted to JSON using built-in libraries
-    -> Define a `to_json()` method for models to return a dictionary representation
+-> serialising resources  
+    -> data must be converted to json before sending it to api clients  
+    -> models in the app's database need serialisation functions to convert to json  
+    -> a json object is a dictionary containing fields with values  
+    -> python dictionaries can be easily converted to json using built-in libraries  
+    -> define a `to_json()` method for models to return a dictionary representation  
 
-    -> Example of a user model's to_json function
-        -> The function returns a dictionary with links to specific user resources
-        -> Fields include URL, username, last seen time, and compositions
-        -> Compositions are represented by a count of the compositions a user has
+    -> example of a user model's to_json function  
+        -> the function returns a dictionary with links to specific user resources  
+        -> fields include url, username, last seen time, and compositions  
+        -> compositions are represented by a count of the compositions a user has  
 
-    -> Other models to consider for serialisation
-        -> Composition and Comment models also need to be serialised
-        -> Composition includes fields like URL, release type, title, and description
-        -> Comment includes URL, composition URL, and body content
+    -> other models to consider for serialisation  
+        -> composition and comment models also need to be serialised  
+        -> composition includes fields like url, release type, title, and description  
+        -> comment includes url, composition url, and body content  
 
--> Learn by Doing
-    -> Task: Define the `to_json()` method for the Composition model
-        -> Map composition attributes like title, description, release type to dictionary
-        -> Add URL links to the relevant composition resources for clients to access
+-> learn by doing  
+    -> task: define the `to_json()` method for the composition model  
+        -> map composition attributes like title, description, release type to dictionary  
+        -> add url links to the relevant composition resources for clients to access  
 
-    -> Example for Composition and Comment models
-        -> Composition attributes include release type, title, description, and artist URL
-        -> Comment attributes include comment URL, composition URL, and body content
+    -> example for composition and comment models  
+        -> composition attributes include release type, title, description, and artist url  
+        -> comment attributes include comment url, composition url, and body content  
 
--> JSON Deserialisation
-    -> Clients can send JSON data to create new compositions
-    -> The app must validate the received JSON before saving to the database
-    -> Create a static `from_json()` method to handle incoming data
-    -> Validate essential fields like release type, title, and description before creating a composition
+-> json deserialisation  
+    -> clients can send json data to create new compositions  
+    -> the app must validate the received json before saving to the database  
+    -> create a static `from_json()` method to handle incoming data  
+    -> validate essential fields like release type, title, and description before creating a composition  
 
-    -> Handling invalid data
-        -> If JSON data is invalid, raise a `ValidationError`
-        -> Create custom exception handling for smoother error management
-        -> Use an error handler to return a meaningful response instead of a 500 server error
+    -> handling invalid data  
+        -> if json data is invalid, raise a `ValidationError`  
+        -> create custom exception handling for smoother error management  
+        -> use an error handler to return a meaningful response instead of a 500 server error  
 
--> Summary of Serialisation and Deserialisation
-    -> Serialisation is the process of converting database models to JSON for API clients
-    -> Deserialisation is the reverse process where JSON data is converted to models
-    -> Proper handling of JSON data ensures smooth data exchange between clients and the API
+-> summary of serialisation and deserialisation  
+    -> serialisation is the process of converting database models to json for api clients  
+    -> deserialisation is the reverse process where json data is converted to models  
+    -> proper handling of json data ensures smooth data exchange between clients and the api  
 
--> ValidationError handling
-    -> A custom exception `ValidationError` is defined in `app/exceptions.py`
-    -> Used to catch invalid data and return proper error responses
-    -> Example of raising a `ValidationError` when critical fields are missing in the composition
+-> validationerror handling  
+    -> a custom exception `ValidationError` is defined in `app/exceptions.py`  
+    -> used to catch invalid data and return proper error responses  
+    -> example of raising a `ValidationError` when critical fields are missing in the composition  
 
-    -> API error handler for `ValidationError`
-        -> Returns a `bad_request` response with the error message
+    -> api error handler for `ValidationError`  
+        -> returns a `bad_request` response with the error message  

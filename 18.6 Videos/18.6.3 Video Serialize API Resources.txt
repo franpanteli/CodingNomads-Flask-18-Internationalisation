@@ -1,104 +1,102 @@
-How to Serialise Users and Handle Their Data in an API – Detailed Guide
+-> serialising user data  
+    -> the first step is serialising user data to convert it into a format (e.g., json) that can be transmitted over the internet, allowing api consumers to interact with the data easily  
+    -> serialisation allows complex python objects (like instances of the user model) to be converted into a standard format (such as json) that can be sent over the network and parsed by clients  
+    -> to serialise user data, use a serialiser class that defines the structure and fields to be included in the api response  
+      - you can use `marshmallow` or `flask-marshmallow` to help with serialisation in flask applications, which integrates with sqlalchemy models  
+    -> example: define a `userschema` to serialise the user data:  
+      ```python  
+      from flask_marshmallow import Marshmallow  
+      from app import ma  
+      
+      class UserSchema(ma.SQLAlchemyAutoSchema):  
+          class Meta:  
+              model = User  # link this schema to the user model  
+              load_instance = True  # allow deserialisation back into python objects  
+      ```  
+    -> the serialised data will now include user attributes like email, username, and other fields defined in the user model  
 
--> Serialising User Data
-   -> The first step is serialising user data to convert it into a format (e.g., JSON) that can be transmitted over the Internet, allowing API consumers to interact with the data easily
-   -> Serialisation allows complex Python objects (like instances of the User model) to be converted into a standard format (such as JSON) that can be sent over the network and parsed by clients
-   -> To serialise user data, use a serialiser class that defines the structure and fields to be included in the API response
-     - You can use `marshmallow` or `flask-marshmallow` to help with serialisation in Flask applications, which integrates with SQLAlchemy models
-   -> Example: Define a `UserSchema` to serialise the user data:
-     ```python
-     from flask_marshmallow import Marshmallow
-     from app import ma
-     
-     class UserSchema(ma.SQLAlchemyAutoSchema):
-         class Meta:
-             model = User  # Link this schema to the User model
-             load_instance = True  # Allow deserialisation back into Python objects
-     ```
-   -> The serialised data will now include user attributes like email, username, and other fields defined in the User model
+-> linking compositions to users  
+    -> once user data is serialised, you can add additional information to enhance the api response, such as linking the user's compositions  
+    -> linking compositions means including a list of compositions belonging to the user or compositions that are related to users they follow  
+    -> these compositions can be defined in another table, such as a `compositions` model, where each composition might have a `user_id` that links it to the corresponding user  
+    -> you can use the `nested` field from `marshmallow` to embed the composition data inside the user serialisation  
+      - this allows compositions to be shown directly as part of the user’s data in the api response  
+      - example of linking compositions:  
+        ```python  
+        class UserSchema(ma.SQLAlchemyAutoSchema):  
+            compositions = ma.Nested('CompositionSchema', many=True)  # link compositions  
+            class Meta:  
+                model = User  
+        ```  
+    -> `many=true` ensures that multiple compositions for a user can be returned as a list in the api response  
 
--> Linking Compositions to Users
-   -> Once user data is serialised, you can add additional information to enhance the API response, such as linking the user's compositions
-   -> Linking compositions means including a list of compositions belonging to the user or compositions that are related to users they follow
-   -> These compositions can be defined in another table, such as a `Compositions` model, where each composition might have a `user_id` that links it to the corresponding user
-   -> You can use the `Nested` field from `marshmallow` to embed the composition data inside the user serialisation
-   - This allows compositions to be shown directly as part of the user’s data in the API response
-   - Example of linking compositions:
-     ```python
-     class UserSchema(ma.SQLAlchemyAutoSchema):
-         compositions = ma.Nested('CompositionSchema', many=True)  # Link compositions
-         class Meta:
-             model = User
-     ```
-   -> `many=True` ensures that multiple compositions for a user can be returned as a list in the API response
+-> validating required information  
+    -> before processing incoming data, ensure all required fields are present and correctly formatted  
+    -> if a field is missing or incorrect, the request should be rejected with a clear error message  
+    -> to handle missing or invalid data, create custom validation logic that checks for the required fields and their values  
+    -> validation ensures that the data meets the expected structure before it’s processed further  
+    -> if any information is missing or incorrect, raise an error to inform the client of the issue  
+      - example: check if the `title` field of a composition is provided:  
+        ```python  
+        def validate_composition_data(data):  
+            if 'title' not in data or not data['title']:  
+                raise ValidationError("Title is required")  
+        ```
 
--> Validating Required Information
-   -> Before processing incoming data, ensure all required fields are present and correctly formatted
-   -> If a field is missing or incorrect, the request should be rejected with a clear error message
-   -> To handle missing or invalid data, create custom validation logic that checks for the required fields and their values
-   -> Validation ensures that the data meets the expected structure before it’s processed further
-   -> If any information is missing or incorrect, raise an error to inform the client of the issue
-   - Example: Check if the `title` field of a composition is provided:
-     ```python
-     def validate_composition_data(data):
-         if 'title' not in data or not data['title']:
-             raise ValidationError("Title is required")
-     ```
+-> creating a custom validation error class  
+    -> to handle validation errors effectively, define a custom exception class for validation failures  
+    -> this exception class should be reusable throughout the application, specifically for handling validation errors that occur when user input doesn’t meet the required criteria  
+    -> create a file called `exceptions.py` in the `app` package to define the `validationerror` class  
+    -> the `validationerror` class should inherit from the built-in `valueerror` class or any other exception class that suits your needs  
+      - example:  
+        ```python  
+        class ValidationError(ValueError):  
+            def __init__(self, message):  
+                super().__init__(message)  
+                self.message = message  
+        ```  
 
--> Creating a Custom Validation Error Class
-   -> To handle validation errors effectively, define a custom exception class for validation failures
-   -> This exception class should be reusable throughout the application, specifically for handling validation errors that occur when user input doesn’t meet the required criteria
-   -> Create a file called `exceptions.py` in the `app` package to define the `ValidationError` class
-   -> The `ValidationError` class should inherit from the built-in `ValueError` class or any other exception class that suits your needs
-   - Example:
-     ```python
-     class ValidationError(ValueError):
-         def __init__(self, message):
-             super().__init__(message)
-             self.message = message
-     ```
+-> handling validation errors  
+    -> once the `validationerror` class is created, it should be imported wherever you need to handle validation failures  
+    -> this ensures that your app doesn’t crash and that the error is raised consistently throughout the app whenever invalid data is encountered  
+    -> use the `try-except` block to catch `validationerror` and handle it appropriately by sending a structured error response to the api client  
+    -> you can also define the specific response format for validation errors, making it easy for the client to parse the response and understand the issue  
+      - example of catching and raising the error:  
+        ```python  
+        try:  
+            validate_composition_data(request_data)  
+        except ValidationError as e:  
+            raise e  # raise the custom validation error  
+        ```
 
--> Handling Validation Errors
-   -> Once the `ValidationError` class is created, it should be imported wherever you need to handle validation failures
-   -> This ensures that your app doesn’t crash and that the error is raised consistently throughout the app whenever invalid data is encountered
-   -> Use the `try-except` block to catch `ValidationError` and handle it appropriately by sending a structured error response to the API client
-   -> You can also define the specific response format for validation errors, making it easy for the client to parse the response and understand the issue
-   - Example of catching and raising the error:
-     ```python
-     try:
-         validate_composition_data(request_data)
-     except ValidationError as e:
-         raise e  # Raise the custom validation error
-     ```
+-> using error handlers in the api  
+    -> once you have custom validation error classes and logic in place, use flask’s `error_handler` decorator to format these errors into a json response for the api  
+    -> the `error_handler` decorator allows you to catch specific exceptions and return custom error responses, which is essential in maintaining a clean and consistent api  
+    -> this error handler ensures that when a validation error occurs, the api returns a structured error message with a relevant http status code, such as `400 bad request`  
+      - example:  
+        ```python  
+        from flask import jsonify  
+        from app.exceptions import ValidationError  
+        
+        @app.errorhandler(ValidationError)  
+        def handle_validation_error(error):  
+            return jsonify({'message': str(error)}), 400  
+        ```
 
--> Using Error Handlers in the API
-   -> Once you have custom validation error classes and logic in place, use Flask’s `error_handler` decorator to format these errors into a JSON response for the API
-   -> The `error_handler` decorator allows you to catch specific exceptions and return custom error responses, which is essential in maintaining a clean and consistent API
-   -> This error handler ensures that when a validation error occurs, the API returns a structured error message with a relevant HTTP status code, such as `400 Bad Request`
-   - Example:
-     ```python
-     from flask import jsonify
-     from app.exceptions import ValidationError
-     
-     @app.errorhandler(ValidationError)
-     def handle_validation_error(error):
-         return jsonify({'message': str(error)}), 400
-     ```
+-> testing the serialisation and validation flow  
+    -> after implementing serialisation and validation, thoroughly test the api to ensure everything works as expected  
+    -> testing should include:  
+      -> verifying that the user data is correctly serialised into the expected json format  
+      -> ensuring compositions are properly linked and shown in the user response  
+      -> confirming that missing or invalid data triggers the appropriate validation errors  
+      -> testing the error-handling mechanism to ensure validation errors return proper responses and messages  
+      - example of a test request:  
+        ```python  
+        response = client.post('/api/compositions', json={"title": "", "content": "Some content"})  
+        assert response.status_code == 400  # expect a validation error due to missing title  
+        ```
 
--> Testing the Serialisation and Validation Flow
-   -> After implementing serialisation and validation, thoroughly test the API to ensure everything works as expected
-   -> Testing should include:
-     -> Verifying that the user data is correctly serialised into the expected JSON format
-     -> Ensuring compositions are properly linked and shown in the user response
-     -> Confirming that missing or invalid data triggers the appropriate validation errors
-     -> Testing the error-handling mechanism to ensure validation errors return proper responses and messages
-   - Example of a test request:
-     ```python
-     response = client.post('/api/compositions', json={"title": "", "content": "Some content"})
-     assert response.status_code == 400  # Expect a validation error due to missing title
-     ```
-
--> Final Thoughts
-   -> In this detailed guide, we’ve covered how to serialise user data and handle related data, such as compositions, through the API
-   -> We’ve also discussed how to validate incoming data, create custom validation error classes, handle these errors gracefully, and test the entire process
-   -> These techniques ensure that your API can handle user data correctly while providing meaningful error messages when validation fails, improving the user experience for API consumers
+-> final thoughts  
+    -> in this detailed guide, we’ve covered how to serialise user data and handle related data, such as compositions, through the api  
+    -> we’ve also discussed how to validate incoming data, create custom validation error classes, handle these errors gracefully, and test the entire process  
+    -> these techniques ensure that your api can handle user data correctly while providing meaningful error messages when validation fails, improving the user experience for api consumers  
